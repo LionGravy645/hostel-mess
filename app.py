@@ -13,7 +13,35 @@ app.secret_key = os.environ.get("SECRET_KEY", "change-this-to-any-long-random-te
 mess.load_data()
 
 
+# shows 17925 as 17,925 on the pages
+@app.template_filter("cr")
+def format_credits(number):
+    return "{:,}".format(number)
+
+
+# shows 2026-10-26 as 26 Oct
+@app.template_filter("day")
+def format_day(text):
+    try:
+        return mess.datetime.datetime.strptime(text, "%Y-%m-%d").strftime("%d %b")
+    except ValueError:
+        return text
+
+
 # ---------------- helpers ----------------
+def group_orders(order_list):
+    # foods placed in one go share the same date and time,
+    # so they are shown together as one meal token
+    tokens = []
+    for o in order_list:
+        if len(tokens) > 0 and tokens[-1]["date"] == o["date"] and tokens[-1]["time"] == o["time"]:
+            tokens[-1]["lines"].append(o)
+            tokens[-1]["total"] += o["cost"]
+        else:
+            tokens.append({"date": o["date"], "time": o["time"], "lines": [o], "total": o["cost"]})
+    return tokens
+
+
 def to_int(text):
     # like int(input()), but does not crash on bad input
     try:
@@ -84,7 +112,7 @@ def student_page():
                            reg_no=reg_no,
                            student=mess.students[reg_no],
                            menu=mess.menu,
-                           orders=mess.student_orders(reg_no))
+                           tokens=group_orders(mess.student_orders(reg_no)))
 
 
 @app.route("/order", methods=["POST"])
@@ -126,8 +154,11 @@ def review_order():
         lines.append({"item": c[0], "qty": c[1], "price": mess.menu[c[0]], "cost": mess.menu[c[0]] * c[1]})
     total = mess.cart_total(cart)
     balance = mess.students[reg_no]["credits"]
+    now = mess.datetime.datetime.now(mess.IST)
     return render_template("review.html", lines=lines, total=total,
-                           balance=balance, enough=total <= balance)
+                           balance=balance, enough=total <= balance,
+                           reg_no=reg_no, name=mess.students[reg_no]["name"],
+                           date=now.strftime("%d %b %Y"), time=now.strftime("%I:%M %p"))
 
 
 @app.route("/order/confirm", methods=["POST"])

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Staff login · Hostel Mess{% endblock %}
-{% block nav %}<a href="{{ url_for('home') }}">Students</a>{% endblock %}
+{% block nav %}<a href="{{ url_for('home') }}">Student login</a>{% endblock %}
 {% block content %}
-<div class="card narrow">
-  <h2>Staff login</h2>
-  <form method="post" class="stack">
-    <label>Staff password
-      <input type="password" name="password" required autofocus>
-    </label>
-    <button class="btn">Log in</button>
+<section class="entry solo">
+  <h1 class="entry-title">Mess counter</h1>
+  <p class="lede">For mess staff. Manage the menu, see sales and student credits.</p>
+  <form method="post" class="form">
+    <label for="password">Staff password</label>
+    <input id="password" type="password" name="password" autocomplete="current-password" required autofocus>
+    <button class="btn primary wide">Open counter</button>
   </form>
-</div>
+</section>
 {% endblock %}

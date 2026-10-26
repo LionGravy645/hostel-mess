@@ -2,16 +2,17 @@
 {% block title %}Register · Hostel Mess{% endblock %}
 {% block nav %}<a href="{{ url_for('home') }}">Log in</a>{% endblock %}
 {% block content %}
-<div class="card narrow">
-  <h2>New student registration</h2>
-  <form method="post" class="stack">
-    <label>Reg No
-      <input name="reg_no" placeholder="e.g. 26BCM0088" required autofocus>
-    </label>
-    <label>Full name
-      <input name="name" placeholder="Your name" required>
-    </label>
-    <button class="btn">Register</button>
+<section class="entry solo">
+  <h1 class="entry-title">Join the mess</h1>
+  <p class="lede">New students start with 9,000 credits for the month.</p>
+  <form method="post" class="form">
+    <label for="reg_no">Registration number</label>
+    <input id="reg_no" name="reg_no" placeholder="26BCM0088" autocapitalize="characters"
+           spellcheck="false" required autofocus>
+    <label for="name">Full name</label>
+    <input id="name" name="name" placeholder="As on your ID card" autocomplete="name" required>
+    <button class="btn primary wide">Register</button>
   </form>
-</div>
+  <p class="aside">Already registered? <a href="{{ url_for('home') }}">Log in</a></p>
+</section>
 {% endblock %}

@@ -1,85 +1,97 @@
 {% extends "base.html" %}
-{% block title %}Staff · Hostel Mess{% endblock %}
-{% block nav %}<span class="who">Staff</span> <a href="{{ url_for('staff_logout') }}">Log out</a>{% endblock %}
+{% block title %}Counter · Hostel Mess{% endblock %}
+{% block nav %}<span class="who">Staff</span><a href="{{ url_for('staff_logout') }}">Log out</a>{% endblock %}
 {% block content %}
-<section class="hero"><h1>Mess dashboard</h1></section>
-
-<div class="card">
-  <div class="row">
-    <h2>Sales summary · {{ "Today" if is_today else summary.date }}</h2>
-    <form method="get" class="inline">
-      <input type="date" name="date" value="{{ summary.date }}">
-      <button class="btn secondary">Show</button>
-    </form>
-  </div>
-  <div class="stats">
-    <div><span class="muted small">Orders</span><strong>{{ summary.total_orders }}</strong></div>
-    <div><span class="muted small">Items sold</span><strong>{{ summary.total_items }}</strong></div>
-    <div><span class="muted small">Sales</span><strong>{{ summary.total_sales }}</strong></div>
-  </div>
-  {% if summary.rows %}
-  <table class="bill">
-    {% for r in summary.rows %}
-    <tr><td>{{ r.item }} × {{ r.qty }}</td><td class="price">{{ r.amount }}</td></tr>
-    {% endfor %}
-  </table>
-  {% else %}
-  <p class="muted">No orders on this day.</p>
-  {% endif %}
-</div>
-
-<div class="grid two">
-  <div class="card">
-    <h2>Menu</h2>
-    <table class="order-table staff-menu">
-      <thead><tr><th>Item</th><th>Price</th><th></th></tr></thead>
-      <tbody>
-      {% for item, price in menu.items() %}
-        <tr>
-          <td>{{ item }}</td>
-          <td>
-            <form method="post" action="{{ url_for('staff_change_price') }}" class="inline tight">
-              <input type="hidden" name="item" value="{{ item }}">
-              <input class="qty" type="number" name="price" value="{{ price }}" min="1">
-              <button class="btn small secondary">Save</button>
-            </form>
-          </td>
-          <td>
-            <form method="post" action="{{ url_for('staff_remove_item') }}"
-                  onsubmit='return confirm({{ ("Remove " ~ item ~ " from the menu?") | tojson }})'>
-              <input type="hidden" name="item" value="{{ item }}">
-              <button class="btn small danger">Remove</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-
-    <h3>Add item</h3>
-    <form method="post" action="{{ url_for('staff_add_item') }}" class="inline">
-      <input name="name" placeholder="Item name" required>
-      <input class="qty" type="number" name="price" placeholder="Price" min="1" required>
-      <button class="btn">Add</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <div class="row">
-      <h2>Students</h2>
-      <form method="post" action="{{ url_for('staff_monthly') }}"
-            onsubmit="return confirm('Add {{ monthly }} credits to every student?')">
-        <button class="btn small secondary">+{{ monthly }} monthly credits</button>
+<div class="counter">
+  <section class="sales" aria-labelledby="sales-title">
+    <div class="sales-head">
+      <h1 id="sales-title">{{ "Today's sales" if is_today else "Sales on " ~ summary.date }}</h1>
+      <form method="get" class="date-pick">
+        <label for="date" class="sr-only">Pick a day</label>
+        <input id="date" type="date" name="date" value="{{ summary.date }}">
+        <button class="btn quiet">Show day</button>
       </form>
     </div>
-    <table class="order-table">
-      <thead><tr><th>Reg No</th><th>Name</th><th>Credits</th></tr></thead>
-      <tbody>
-      {% for reg_no, s in students.items() %}
-        <tr><td class="mono">{{ reg_no }}</td><td>{{ s.name }}</td><td class="price">{{ s.credits }}</td></tr>
+
+    <p class="sales-line">
+      <strong>{{ summary.total_sales|cr }}</strong> credits from
+      <strong>{{ summary.total_items }}</strong> {{ "item" if summary.total_items == 1 else "items" }}
+      across <strong>{{ summary.total_orders }}</strong> {{ "order line" if summary.total_orders == 1 else "order lines" }}
+    </p>
+
+    {% if summary.rows %}
+    {% set top = summary.rows | map(attribute="amount") | max %}
+    <ul class="bars">
+      {% for r in summary.rows | sort(attribute="amount", reverse=true) %}
+      <li>
+        <span class="bar-name">{{ r.item }}</span>
+        <span class="bar-track"><span class="bar-fill" style="width: {{ (r.amount / top * 100)|round(1) }}%"></span></span>
+        <span class="bar-qty">{{ r.qty }} sold</span>
+        <span class="bar-amt">{{ r.amount|cr }}</span>
+      </li>
       {% endfor %}
-      </tbody>
-    </table>
+    </ul>
+    {% else %}
+    <p class="empty">No orders on this day.</p>
+    {% endif %}
+  </section>
+
+  <div class="counter-grid">
+    <section class="panel" aria-labelledby="menu-title">
+      <h2 id="menu-title" class="section-title">Menu</h2>
+      <ul class="menu-edit">
+        {% for item, price in menu.items() %}
+        <li>
+          <span class="me-name">{{ item }}</span>
+          <form method="post" action="{{ url_for('staff_change_price') }}" class="me-price">
+            <input type="hidden" name="item" value="{{ item }}">
+            <label class="sr-only" for="price-{{ loop.index }}">Price of {{ item }}</label>
+            <input id="price-{{ loop.index }}" type="number" name="price" value="{{ price }}" min="1" inputmode="numeric">
+            <button class="btn quiet small">Save</button>
+          </form>
+          <form method="post" action="{{ url_for('staff_remove_item') }}"
+                onsubmit='return confirm({{ ("Remove " ~ item ~ " from the menu?") | tojson }})'>
+            <input type="hidden" name="item" value="{{ item }}">
+            <button class="btn danger small" aria-label="Remove {{ item }}">Remove</button>
+          </form>
+        </li>
+        {% else %}
+        <li class="empty">The menu is empty. Add the first item below.</li>
+        {% endfor %}
+      </ul>
+
+      <form method="post" action="{{ url_for('staff_add_item') }}" class="add-item">
+        <h3>Add an item</h3>
+        <div class="add-row">
+          <label class="sr-only" for="new-name">Item name</label>
+          <input id="new-name" name="name" placeholder="Item name, e.g. Poha" required>
+          <label class="sr-only" for="new-price">Price</label>
+          <input id="new-price" type="number" name="price" placeholder="Price" min="1" inputmode="numeric" required>
+          <button class="btn primary">Add item</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="students-title">
+      <div class="panel-head">
+        <h2 id="students-title" class="section-title">Students <span class="count">{{ students|length }}</span></h2>
+        <form method="post" action="{{ url_for('staff_monthly') }}"
+              onsubmit='return confirm({{ ("Add " ~ monthly ~ " credits to every student?") | tojson }})'>
+          <button class="btn quiet small">Add {{ monthly|cr }} monthly credits</button>
+        </form>
+      </div>
+      <table class="roster">
+        <thead><tr><th scope="col">Student</th><th scope="col">Credits</th></tr></thead>
+        <tbody>
+          {% for reg_no, s in students.items() %}
+          <tr>
+            <td><span class="r-name">{{ s.name }}</span><span class="r-reg">{{ reg_no }}</span></td>
+            <td class="r-cr">{{ s.credits|cr }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
   </div>
 </div>
 {% endblock %}

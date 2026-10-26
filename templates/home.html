@@ -1,34 +1,35 @@
 {% extends "base.html" %}
-{% block nav %}<a href="{{ url_for('staff_login') }}">Staff</a>{% endblock %}
+{% block nav %}<a href="{{ url_for('staff_login') }}">Staff login</a>{% endblock %}
 {% block content %}
-<section class="hero">
-  <h1>What's cooking today?</h1>
-  <p class="muted">Log in with your Reg No to order from the mess.</p>
-</section>
-
-<div class="grid two">
-  <div class="card">
-    <h2>Student login</h2>
-    <form method="post" action="{{ url_for('student_login') }}" class="stack">
-      <label>Reg No
-        <input name="reg_no" placeholder="e.g. 26BIT0005" required autofocus>
-      </label>
-      <button class="btn">Log in</button>
-    </form>
-    <p class="muted small">New here? <a href="{{ url_for('register') }}">Register as a new student</a></p>
-  </div>
-
-  <div class="card">
-    <h2>Today's menu</h2>
+<div class="home">
+  <section class="board" aria-labelledby="board-title">
+    <h1 id="board-title" class="board-title">Today's menu</h1>
     {% if menu %}
-    <ul class="menu-list">
+    <ul class="board-list">
       {% for item, price in menu.items() %}
-      <li><span>{{ item }}</span><span class="price">{{ price }} cr</span></li>
+      <li>
+        <span class="board-item">{{ item }}</span>
+        <span class="board-dots" aria-hidden="true"></span>
+        <span class="board-price">{{ price }}</span>
+      </li>
       {% endfor %}
     </ul>
+    <p class="board-note">Prices in mess credits</p>
     {% else %}
-    <p class="muted">The menu is empty right now.</p>
+    <p class="board-note">The kitchen hasn't put up a menu yet.</p>
     {% endif %}
-  </div>
+  </section>
+
+  <section class="entry">
+    <h2 class="entry-title">Order your meal</h2>
+    <p class="lede">Enter your registration number to see your balance and order.</p>
+    <form method="post" action="{{ url_for('student_login') }}" class="form">
+      <label for="reg_no">Registration number</label>
+      <input id="reg_no" name="reg_no" placeholder="26BIT0005" autocomplete="username"
+             autocapitalize="characters" spellcheck="false" required autofocus>
+      <button class="btn primary wide">Log in</button>
+    </form>
+    <p class="aside">First time eating here? <a href="{{ url_for('register') }}">Register as a new student</a></p>
+  </section>
 </div>
 {% endblock %}

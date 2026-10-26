@@ -1,29 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Your order · Hostel Mess{% endblock %}
-{% block nav %}<a href="{{ url_for('student_page') }}">Back</a>{% endblock %}
+{% block title %}Your token · Hostel Mess{% endblock %}
+{% block nav %}<a href="{{ url_for('student_page') }}">Back to menu</a>{% endblock %}
 {% block content %}
-<div class="card narrow">
-  <h2>Your order</h2>
-  <table class="bill">
-    {% for l in lines %}
-    <tr><td>{{ l.item }} × {{ l.qty }}</td><td class="price">{{ l.cost }}</td></tr>
-    {% endfor %}
-    <tr class="total"><td>Total</td><td class="price">{{ total }}</td></tr>
-    <tr class="muted"><td>Your balance</td><td class="price">{{ balance }}</td></tr>
-    {% if enough %}
-    <tr class="muted"><td>After this order</td><td class="price">{{ balance - total }}</td></tr>
-    {% endif %}
-  </table>
+<div class="review">
+  <h1 class="review-title">{{ "Check your order" if enough else "Not enough credits" }}</h1>
+
+  <div class="token-wrap">
+  <article class="token" aria-label="Meal token">
+    <header class="token-head">
+      <p class="token-brand">Hostel Mess</p>
+      <p>Meal token</p>
+    </header>
+    <dl class="token-meta">
+      <div><dt>Name</dt><dd>{{ name }}</dd></div>
+      <div><dt>Reg no</dt><dd>{{ reg_no }}</dd></div>
+      <div><dt>Date</dt><dd>{{ date }}</dd></div>
+      <div><dt>Time</dt><dd>{{ time }}</dd></div>
+    </dl>
+    <table class="token-items-table">
+      <caption class="sr-only">Items in this order</caption>
+      <thead><tr><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Cr</th></tr></thead>
+      <tbody>
+        {% for l in lines %}
+        <tr><td>{{ l.item }}<br><small>@ {{ l.price }}</small></td><td>{{ l.qty }}</td><td>{{ l.cost|cr }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <dl class="token-sum">
+      <div class="token-total"><dt>Total</dt><dd>{{ total|cr }}</dd></div>
+      <div><dt>Balance</dt><dd>{{ balance|cr }}</dd></div>
+      {% if enough %}
+      <div><dt>Left after</dt><dd>{{ (balance - total)|cr }}</dd></div>
+      {% else %}
+      <div class="token-short"><dt>Short by</dt><dd>{{ (total - balance)|cr }}</dd></div>
+      {% endif %}
+    </dl>
+    <p class="token-foot">Show this at the counter</p>
+  </article>
+  </div>
 
   {% if enough %}
-  <div class="actions">
-    <form method="post" action="{{ url_for('cancel_order') }}"><button class="btn ghost">Cancel</button></form>
-    <form method="post" action="{{ url_for('confirm_order') }}"><button class="btn">Confirm order</button></form>
+  <div class="review-actions">
+    <form method="post" action="{{ url_for('cancel_order') }}"><button class="btn quiet">Cancel</button></form>
+    <form method="post" action="{{ url_for('confirm_order') }}"><button class="btn primary">Confirm order</button></form>
   </div>
   {% else %}
-  <div class="flash error">Not enough credits! Please recharge.</div>
-  <div class="actions">
-    <form method="post" action="{{ url_for('cancel_order') }}"><button class="btn ghost">Back to menu</button></form>
+  <p class="review-hint">Recharge from your balance card, or remove some items.</p>
+  <div class="review-actions">
+    <form method="post" action="{{ url_for('cancel_order') }}"><button class="btn primary">Back to menu</button></form>
   </div>
   {% endif %}
 </div>

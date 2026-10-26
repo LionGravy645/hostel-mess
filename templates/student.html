@@ -1,68 +1,146 @@
 {% extends "base.html" %}
-{% block title %}My Mess · Hostel Mess{% endblock %}
-{% block nav %}<span class="who">{{ reg_no }}</span> <a href="{{ url_for('logout') }}">Log out</a>{% endblock %}
+{% block title %}Order · Hostel Mess{% endblock %}
+{% block body_class %}has-tray{% endblock %}
+{% block nav %}<span class="who">{{ reg_no }}</span><a href="{{ url_for('logout') }}">Log out</a>{% endblock %}
 {% block content %}
-<section class="hero row">
-  <div>
-    <h1>Welcome, {{ student.name.split()[0] }}</h1>
-    <p class="muted">{{ student.name }} · {{ reg_no }}</p>
+<section class="wallet">
+  <div class="wallet-hello">
+    <h1>Hi, {{ student.name.split()[0] }}</h1>
+    <p class="lede">What are you having?</p>
   </div>
-  <div class="balance">
-    <span class="muted small">Balance</span>
-    <strong>{{ student.credits }}</strong>
-    <span class="muted small">credits</span>
+  <div class="wallet-card">
+    <p class="wallet-label">Balance</p>
+    <p class="wallet-amount" id="balance" data-balance="{{ student.credits }}">{{ student.credits|cr }}<span> credits</span></p>
+    <details class="recharge">
+      <summary>Recharge</summary>
+      <form method="post" action="{{ url_for('student_recharge') }}" class="recharge-form">
+        <label for="amount" class="sr-only">Amount to add</label>
+        <input id="amount" type="number" name="amount" min="1" placeholder="Amount" inputmode="numeric" required>
+        <button class="btn quiet">Add credits</button>
+      </form>
+    </details>
   </div>
 </section>
 
-<div class="grid two">
-  <div class="card">
-    <h2>Place an order</h2>
-    {% if menu %}
-    <form method="post" action="{{ url_for('make_cart') }}">
-      <table class="order-table">
-        <thead><tr><th>Item</th><th>Price</th><th>Qty</th></tr></thead>
-        <tbody>
-        {% for item, price in menu.items() %}
-          <tr>
-            <td>{{ item }}<input type="hidden" name="item" value="{{ item }}"></td>
-            <td class="price">{{ price }}</td>
-            <td><input class="qty" type="number" name="qty" value="0" min="0" max="50" inputmode="numeric"></td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-      <button class="btn">Review order</button>
-    </form>
-    {% else %}
-    <p class="muted">The menu is empty right now.</p>
-    {% endif %}
-  </div>
-
-  <div class="stack-cards">
-    <div class="card">
-      <h2>Recharge credits</h2>
-      <form method="post" action="{{ url_for('student_recharge') }}" class="inline">
-        <input type="number" name="amount" min="1" placeholder="Amount" required>
-        <button class="btn secondary">Recharge</button>
-      </form>
+{% if menu %}
+<form method="post" action="{{ url_for('make_cart') }}" class="order" id="order-form">
+  <section class="menu-grid" aria-label="Menu">
+    {% for item, price in menu.items() %}
+    <div class="tile" data-price="{{ price }}" data-item="{{ item }}">
+      <div class="tile-head">
+        <h2 class="tile-name">{{ item }}</h2>
+        <p class="tile-price">{{ price }} <span>credits</span></p>
+      </div>
+      <input type="hidden" name="item" value="{{ item }}">
+      <div class="stepper">
+        <button type="button" class="step minus" aria-label="One less {{ item }}">−</button>
+        <label class="sr-only" for="qty-{{ loop.index }}">Quantity of {{ item }}</label>
+        <input id="qty-{{ loop.index }}" class="qty" type="number" name="qty" value="0" min="0" max="50" inputmode="numeric">
+        <button type="button" class="step plus" aria-label="One more {{ item }}">+</button>
+      </div>
     </div>
+    {% endfor %}
+  </section>
 
-    <div class="card">
-      <h2>My orders</h2>
-      {% if orders %}
-      <ul class="history">
-        {% for o in orders %}
-        <li>
-          <div><strong>{{ o.item }}</strong> × {{ o.qty }}</div>
-          <div class="muted small">{{ o.date }} · {{ o.time }}</div>
-          <div class="price">−{{ o.cost }}</div>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <p class="muted">No orders yet.</p>
-      {% endif %}
+  <aside class="tray" aria-label="Your tray">
+    <h2 class="tray-title">Your tray</h2>
+    <ul class="tray-lines" id="tray-lines">
+      <li class="tray-empty">Add something from the menu.</li>
+    </ul>
+    <div class="tray-sum">
+      <p class="tray-total"><span>Total</span><strong id="tray-total">0</strong></p>
+      <p class="tray-after" id="tray-after"></p>
     </div>
-  </div>
-</div>
+    <button class="btn primary wide" id="tray-btn">Review order</button>
+  </aside>
+</form>
+{% else %}
+<p class="empty">The kitchen hasn't put up a menu yet. Check back closer to meal time.</p>
+{% endif %}
+
+<section class="history" aria-labelledby="history-title">
+  <h2 id="history-title" class="section-title">Past orders</h2>
+  {% if tokens %}
+  <ol class="token-list">
+    {% for t in tokens %}
+    <li class="token-row">
+      <div class="token-when">
+        <span class="token-date">{{ t.date|day }}</span>
+        <span class="token-time">{{ t.time[:5] }}</span>
+      </div>
+      <p class="token-items">
+        {% for l in t.lines %}{{ l.item }} ×{{ l.qty }}{% if not loop.last %}, {% endif %}{% endfor %}
+      </p>
+      <p class="token-cost">−{{ t.total|cr }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="empty">Your orders will show up here after your first meal.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById("order-form");
+  if (!form) return;
+  var balance = parseInt(document.getElementById("balance").dataset.balance, 10);
+  var tiles = form.querySelectorAll(".tile");
+  var lines = document.getElementById("tray-lines");
+  var totalEl = document.getElementById("tray-total");
+  var afterEl = document.getElementById("tray-after");
+  var btn = document.getElementById("tray-btn");
+  var fmt = function (n) { return n.toLocaleString("en-IN"); };
+
+  function qtyOf(tile) {
+    var v = parseInt(tile.querySelector(".qty").value, 10);
+    return isNaN(v) || v < 0 ? 0 : v;
+  }
+
+  function update() {
+    var total = 0, count = 0;
+    lines.innerHTML = "";
+    tiles.forEach(function (tile) {
+      var q = qtyOf(tile), price = parseInt(tile.dataset.price, 10);
+      tile.classList.toggle("picked", q > 0);
+      if (q > 0) {
+        count += q;
+        total += q * price;
+        var li = document.createElement("li");
+        var name = document.createElement("span");
+        name.textContent = tile.dataset.item + " ×" + q;
+        var cost = document.createElement("span");
+        cost.textContent = fmt(q * price);
+        li.appendChild(name); li.appendChild(cost);
+        lines.appendChild(li);
+      }
+    });
+    if (count === 0) {
+      lines.innerHTML = '<li class="tray-empty">Add something from the menu.</li>';
+    }
+    totalEl.textContent = fmt(total);
+    var short = total > balance;
+    afterEl.classList.toggle("short", short);
+    afterEl.textContent = count === 0 ? "" :
+      short ? "That's " + fmt(total - balance) + " more than your balance."
+            : fmt(balance - total) + " left after this";
+    btn.disabled = count === 0 || short;
+    document.body.classList.toggle("tray-open", count > 0);
+  }
+
+  tiles.forEach(function (tile) {
+    var input = tile.querySelector(".qty");
+    tile.querySelector(".plus").addEventListener("click", function () {
+      input.value = Math.min(50, qtyOf(tile) + 1); update();
+    });
+    tile.querySelector(".minus").addEventListener("click", function () {
+      input.value = Math.max(0, qtyOf(tile) - 1); update();
+    });
+    input.addEventListener("input", update);
+  });
+  update();
+})();
+</script>
 {% endblock %}

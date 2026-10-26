@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Your order · Hostel Mess{% endblock %}
+{% block nav %}<a href="{{ url_for('student_page') }}">Back</a>{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h2>Your order</h2>
+  <table class="bill">
+    {% for l in lines %}
+    <tr><td>{{ l.item }} × {{ l.qty }}</td><td class="price">{{ l.cost }}</td></tr>
+    {% endfor %}
+    <tr class="total"><td>Total</td><td class="price">{{ total }}</td></tr>
+    <tr class="muted"><td>Your balance</td><td class="price">{{ balance }}</td></tr>
+    {% if enough %}
+    <tr class="muted"><td>After this order</td><td class="price">{{ balance - total }}</td></tr>
+    {% endif %}
+  </table>
+
+  {% if enough %}
+  <div class="actions">
+    <form method="post" action="{{ url_for('cancel_order') }}"><button class="btn ghost">Cancel</button></form>
+    <form method="post" action="{{ url_for('confirm_order') }}"><button class="btn">Confirm order</button></form>
+  </div>
+  {% else %}
+  <div class="flash error">Not enough credits! Please recharge.</div>
+  <div class="actions">
+    <form method="post" action="{{ url_for('cancel_order') }}"><button class="btn ghost">Back to menu</button></form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

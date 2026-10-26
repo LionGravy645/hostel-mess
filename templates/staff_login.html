@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Staff login · Hostel Mess{% endblock %}
+{% block nav %}<a href="{{ url_for('home') }}">Students</a>{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h2>Staff login</h2>
+  <form method="post" class="stack">
+    <label>Staff password
+      <input type="password" name="password" required autofocus>
+    </label>
+    <button class="btn">Log in</button>
+  </form>
+</div>
+{% endblock %}

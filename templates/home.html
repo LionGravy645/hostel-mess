@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block nav %}<a href="{{ url_for('staff_login') }}">Staff</a>{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>What's cooking today?</h1>
+  <p class="muted">Log in with your Reg No to order from the mess.</p>
+</section>
+
+<div class="grid two">
+  <div class="card">
+    <h2>Student login</h2>
+    <form method="post" action="{{ url_for('student_login') }}" class="stack">
+      <label>Reg No
+        <input name="reg_no" placeholder="e.g. 26BIT0005" required autofocus>
+      </label>
+      <button class="btn">Log in</button>
+    </form>
+    <p class="muted small">New here? <a href="{{ url_for('register') }}">Register as a new student</a></p>
+  </div>
+
+  <div class="card">
+    <h2>Today's menu</h2>
+    {% if menu %}
+    <ul class="menu-list">
+      {% for item, price in menu.items() %}
+      <li><span>{{ item }}</span><span class="price">{{ price }} cr</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">The menu is empty right now.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

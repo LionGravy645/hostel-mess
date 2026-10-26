@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}My Mess · Hostel Mess{% endblock %}
+{% block nav %}<span class="who">{{ reg_no }}</span> <a href="{{ url_for('logout') }}">Log out</a>{% endblock %}
+{% block content %}
+<section class="hero row">
+  <div>
+    <h1>Welcome, {{ student.name.split()[0] }}</h1>
+    <p class="muted">{{ student.name }} · {{ reg_no }}</p>
+  </div>
+  <div class="balance">
+    <span class="muted small">Balance</span>
+    <strong>{{ student.credits }}</strong>
+    <span class="muted small">credits</span>
+  </div>
+</section>
+
+<div class="grid two">
+  <div class="card">
+    <h2>Place an order</h2>
+    {% if menu %}
+    <form method="post" action="{{ url_for('make_cart') }}">
+      <table class="order-table">
+        <thead><tr><th>Item</th><th>Price</th><th>Qty</th></tr></thead>
+        <tbody>
+        {% for item, price in menu.items() %}
+          <tr>
+            <td>{{ item }}<input type="hidden" name="item" value="{{ item }}"></td>
+            <td class="price">{{ price }}</td>
+            <td><input class="qty" type="number" name="qty" value="0" min="0" max="50" inputmode="numeric"></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <button class="btn">Review order</button>
+    </form>
+    {% else %}
+    <p class="muted">The menu is empty right now.</p>
+    {% endif %}
+  </div>
+
+  <div class="stack-cards">
+    <div class="card">
+      <h2>Recharge credits</h2>
+      <form method="post" action="{{ url_for('student_recharge') }}" class="inline">
+        <input type="number" name="amount" min="1" placeholder="Amount" required>
+        <button class="btn secondary">Recharge</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>My orders</h2>
+      {% if orders %}
+      <ul class="history">
+        {% for o in orders %}
+        <li>
+          <div><strong>{{ o.item }}</strong> × {{ o.qty }}</div>
+          <div class="muted small">{{ o.date }} · {{ o.time }}</div>
+          <div class="price">−{{ o.cost }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No orders yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

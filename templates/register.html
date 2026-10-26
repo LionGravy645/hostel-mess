@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Register · Hostel Mess{% endblock %}
+{% block nav %}<a href="{{ url_for('home') }}">Log in</a>{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h2>New student registration</h2>
+  <form method="post" class="stack">
+    <label>Reg No
+      <input name="reg_no" placeholder="e.g. 26BCM0088" required autofocus>
+    </label>
+    <label>Full name
+      <input name="name" placeholder="Your name" required>
+    </label>
+    <button class="btn">Register</button>
+  </form>
+</div>
+{% endblock %}
